@@ -1,0 +1,2 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_riders_logistics_riders_logistics,riders_logistics.riders_logistics,model_riders_logistics_riders_logistics,,1,0,0,0
