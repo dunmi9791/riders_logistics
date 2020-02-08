@@ -1,0 +1,130 @@
+
+<odoo>
+    <data>
+       <record id="view_delivery_order_tree" model="ir.ui.view">
+            <field name="name">delivery.order.tree</field>
+            <field name="model">delivery.order</field>
+            <field name="arch" type="xml">
+                <tree string="Delivery Order" >
+
+                    <field name="delivery_address" />
+                    <field name="pickup_location"/>
+                    <field name="order_no" />
+                    <field name="package_type"/>
+                    <field name="amount"/>
+
+
+
+                </tree>
+            </field>
+        </record>
+
+        <record id="view_riders_deliveries_form" model="ir.ui.view">
+        <field name="name">view.riders.deliveries.form</field>
+        <field name="model">delivery.order</field>
+        <field name="arch" type="xml">
+          <form name="Delivery Order Form">
+              <header>
+
+                  <button name="authorise" string="Pick Up" class="oe_highlight" states="Requested" groups="" type="object"/>
+                  <button name="process" string="Process" class="oe_highlight" states="picked,Requested" groups="" type="object"/>
+                  <button name="receive" string="Delivered" class="oe_highlight" states="Processed" groups="" type="object"/>
+
+
+
+                  <field name="state" widget="statusbar" statusbar_visible="Requested,Picked,Processed,Delivered,Canceled"/>
+              </header>
+    <sheet>
+
+        <div class="oe_title">
+            <h1>
+                <field name="order_no"/>
+            </h1>
+        </div>
+        <group>
+                <group>
+                    <field name="client_id" />
+                    <field name="pickup_location"/>
+                    <field name="date"/>
+
+                </group>
+                <group>
+                    <field name="consignee"/>
+                    <field name="delivery_address"/>
+                    <field name="package_type"/>
+                    <field name="is_payment_on_delivery"/>
+                    <field name="amount"/>
+                    <field name="additional_instruction"/>
+                </group>
+        </group>
+              <group>
+                  <group>
+
+                  </group>
+                  <group>
+
+                  </group>
+              </group>
+                <group>
+                  <group>
+
+                  </group>
+                   <group>
+
+                   </group>
+                </group>
+
+            </sheet>
+               <div class="oe_chatter">
+                 <field name="message_follower_ids" widget="mail_followers"/>
+                 <field name="message_ids" widget="mail_thread"/>
+               </div>
+
+          </form>
+
+        </field>
+      </record>
+         <record id="view_riders_thirdparty_form" model="ir.ui.view">
+        <field name="name">view.riders.thirdparty.form</field>
+        <field name="model">thirdparty.delivery</field>
+        <field name="arch" type="xml">
+          <form name="Third party delivery Form">
+              <header>
+
+                  <button name="park" string="Park" class="oe_highlight" states="draft" groups="" type="object"/>
+                  <button name="send" string="Send" class="oe_highlight" states="packaged" groups="" type="object"/>
+                  <button name="receive" string="Receive" class="oe_highlight" states="sent" groups="" type="object"/>
+
+
+
+                  <field name="state" widget="statusbar" statusbar_visible="draft,packaged,sent,received,Canceled"/>
+              </header>
+    <sheet>
+
+        <div class="oe_title">
+            <h1>
+
+            </h1>
+        </div>
+        <notebook>
+            <page string="Packages">
+                <field name="delivery_ids" >
+                </field>
+
+
+
+            </page>
+        </notebook>
+
+            </sheet>
+               <div class="oe_chatter">
+                 <field name="message_follower_ids" widget="mail_followers"/>
+                 <field name="message_ids" widget="mail_thread"/>
+               </div>
+
+          </form>
+
+        </field>
+      </record>
+    </data>
+    </odoo>

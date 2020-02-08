@@ -1,2 +1,6 @@
 id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
-access_riders_logistics_riders_logistics,riders_logistics.riders_logistics,model_riders_logistics_riders_logistics,,1,0,0,0
+access_riders_logistics_riders_logistics,riders_logistics.riders_logistics,model_delivery_order,,1,1,1,1
+access_riders_logistics_riders_logistics2,riders_logistics.riders_logistics2,model_amount_collection,,1,1,1,1
+access_riders_logistics_riders_logistics3,riders_logistics.riders_logistics3,model_thirdparty_delivery,,1,1,1,1
+access_riders_logistics_riders_logistics4,riders_logistics.riders_logistics4,model_delivery_clients,,1,1,1,1
+access_riders_logistics_riders_logistics5,riders_logistics.riders_logistics5,model_thirdparty_courier,,1,1,1,1
