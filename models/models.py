@@ -15,7 +15,7 @@ class DeliveryOrder(models.Model):
 
     name = fields.Char()
     order_no = fields.Char(string="Order Number", required=False,
-                           default=lambda self: self.env['ir.sequence'].next_by_code('increment_orderno'),
+                           default=lambda self: _('New'),
                            requires=False, readonly=True, )
     delivery_address = fields.Text(string="Delivery Address", required=True, )
     pickup_location = fields.Many2one(comodel_name="res.partner", string="Pickup Location", required=False, )
@@ -71,6 +71,13 @@ class DeliveryOrder(models.Model):
     @api.multi
     def cancel(self):
         self.change_state('Canceled')
+
+    @api.model
+    def create(self, vals):
+        if vals.get('order_no', _('New')) == _('New'):
+            vals['order_no'] = self.env['ir.sequence'].next_by_code('increment_orderno') or _('New')
+        result = super(DeliveryOrder, self).create(vals)
+        return result
 
 
 class Collections(models.Model):
