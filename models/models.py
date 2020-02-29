@@ -10,7 +10,7 @@ from datetime import date
 class DeliveryOrder(models.Model):
     _name = 'delivery.order'
     _rec_name = 'order_no'
-    _description = 'New Description'
+    _description = 'Deliveries'
     _inherit = ['mail.thread', 'mail.activity.mixin']
 
     name = fields.Char()
@@ -35,8 +35,14 @@ class DeliveryOrder(models.Model):
     date = fields.Date(string="Date", required=False, default=fields.Date.today())
     consignee = fields.Char(string="Consignee Name", required=True,)
     additional_instruction = fields.Text(string="Additional Instructions", required=False, )
-    client_id = fields.Many2one(comodel_name="res.partner", string="Client", required=True, )
+    client_id = fields.Many2one(comodel_name="res.partner", string="Client", required=True,)
     thirdparty_id = fields.Many2one(comodel_name="thirdparty.delivery", string="Third Party courier", required=False, )
+    thirdparty_ids = fields.One2many(comodel_name="thirdparty.delivery", inverse_name="delivery_ids",
+                                     string="Third Party Courier", required=False, )
+    product_id = fields.Many2one(comodel="product.product", string="Service Type")
+    charges = fields.One2many('delivery.charges', 'order_id', 'Charges', required=False)
+
+
 
     @api.multi
     def is_allowed_transition(self, old_state, new_state):
@@ -79,19 +85,51 @@ class DeliveryOrder(models.Model):
         result = super(DeliveryOrder, self).create(vals)
         return result
 
+    @api.multi
+    def write(self, vals):
+        if vals.get('state'):
+            if vals.get('state') == 'Delivered':
+                your_class_records = self.browse(self)
+                for record in your_class_records:
+                    invoice_id = self.pool.get('account.invoice').create(self, {
+                        'partner_id': record.client_id,
+                        'date_invoice': record.date,
+                    })
+                    for line in record.charges:
+                        self.pool.get('account.invoice.line').create(self, {
+                                      'invoice_id': invoice_id,
+                                       'product_id': line.product_id.id,
+                                       'quantity': line.quantity,
+                                             })
+
+                return super(DeliveryOrder, self).write(vals)
+            else:
+                return super(DeliveryOrder, self).write(vals)
+        else:
+            return super(DeliveryOrder, self).write(vals)
+
 
 class Collections(models.Model):
     _name = 'amount.collection'
-    _rec_name = 'name'
+    _rec_name = 'collection_no'
     _description = 'Amount collected on delivery'
 
-    name = fields.Char()
+    collection_no = fields.Char(string="Collection Number", required=False,
+                                default=lambda self: _('New'),
+                                requires=False, readonly=True,)
     amount = fields.Float(string="Amount", required=False, )
     delivery_order_id = fields.Many2one(comodel_name="delivery.order", string="Delivery Order", required=False, )
     date = fields.Date(string="Date", required=False, )
     mode = fields.Selection(string="Mode of collection", selection=[('pos', 'POS'), ('cash', 'Cash'), ],
                             required=False, )
-    client = fields.Char(string="Client", related="", required=False, readonly=True, )
+    client = fields.Char(string="Client", related="delivery_order_id.client_id.name", required=False, readonly=True, )
+
+    @api.model
+    def create(self, vals):
+        if vals.get('collection_no', _('New')) == _('New'):
+            vals['collection_no'] = self.env['ir.sequence'].next_by_code('increment_collection') or _('New')
+        result = super(Collections, self).create(vals)
+        return result
 
 
 class ThirdParty(models.Model):
@@ -102,18 +140,40 @@ class ThirdParty(models.Model):
     state = fields.Selection(string="", selection=[('draft', 'draft'),('packaged', 'Packaged'), ('sent', 'Sent'),
                                                    ('received', 'Received')], required=False, )
     delivery_ids = fields.Many2many(comodel_name="delivery.order", string="Packages",
-                                   required=False, )
-    
-class DeliveryClients(models.Model):
-    _name = 'delivery.clients'
-    _rec_name = ''
-    _description = 'New Description'
-    _inherit = 'res.partner'
+                                    required=False, )
+    origin = fields.Many2one(comodel_name="location.delivery", string="Originating Location")
+    destination = fields.Many2one(comodel_name="location.delivery", string="Destination")
+    courier_id = fields.Many2one(comodel_name="thirdparty.courier", string="Third Party Courier", required=False, )
+    waybill_no = fields.Char(string="Waybill No.")
+    sent_by = fields.Many2one(comodel_name="res.users", string="Sent By")
+    received_by = fields.Many2one(comodel_name="res.users", string="Received By")
+
+
 
 class ThirdCourier(models.Model):
     _name = 'thirdparty.courier'
     _rec_name = 'name'
-    _description = 'New Description'
+    _description = 'Third party couriers'
 
     name = fields.Char()
+
+
+class Locations(models.Model):
+    _name = 'location.delivery'
+    _rec_name = 'name'
+    _description = 'Locations'
+
+    name = fields.Char()
+
+
+class DeliveryCharges(models.Model):
+    _name = 'delivery.charges'
+    _rec_name = 'name'
+    _description = 'Charges'
+
+    name = fields.Char()
+    product_id = fields.Many2one(comodel_name="product.product")
+    quantity = fields.Float(string="Quantity")
+    order_id = fields.Many2one(comodel_name="delivery.order", string="order", required=False, )
+
 

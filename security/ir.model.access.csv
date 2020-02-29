@@ -4,3 +4,5 @@ access_riders_logistics_riders_logistics2,riders_logistics.riders_logistics2,mod
 access_riders_logistics_riders_logistics3,riders_logistics.riders_logistics3,model_thirdparty_delivery,,1,1,1,1
 access_riders_logistics_riders_logistics4,riders_logistics.riders_logistics4,model_delivery_clients,,1,1,1,1
 access_riders_logistics_riders_logistics5,riders_logistics.riders_logistics5,model_thirdparty_courier,,1,1,1,1
+access_riders_logistics_riders_logistics6,riders_logistics.riders_logistics6,model_location_delivery,,1,1,1,1
+access_riders_logistics_riders_logistics7,riders_logistics.riders_logistics7,model_delivery_charges,,1,1,1,1
