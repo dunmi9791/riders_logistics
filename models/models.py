@@ -41,6 +41,7 @@ class DeliveryOrder(models.Model):
                                      string="Third Party Courier", required=False, )
     product_id = fields.Many2one(comodel="product.product", string="Service Type")
     charges = fields.One2many('delivery.charges', 'order_id', 'Charges', required=False)
+    invoice = fields.Many2one(comodel_name="account.invoice")
 
 
 
@@ -89,19 +90,23 @@ class DeliveryOrder(models.Model):
     def write(self, vals):
         if vals.get('state'):
             if vals.get('state') == 'Delivered':
-                your_class_records = self.browse(self)
-                for record in your_class_records:
-                    invoice_id = self.pool.get('account.invoice').create(self, {
-                        'partner_id': record.client_id,
-                        'date_invoice': record.date,
-                    })
-                    for line in record.charges:
-                        self.pool.get('account.invoice.line').create(self, {
-                                      'invoice_id': invoice_id,
-                                       'product_id': line.product_id.id,
-                                       'quantity': line.quantity,
-                                             })
-
+                record = self.env['account.invoice']
+                invoice_line = {
+                    'product_id': self.charges.product_id.id,
+                    'invoice_id': self.invoice.id,
+                    'name': 'delivery charge',
+                    'price_unit': self.charges.product_id.list_price,
+                    'account_id': self.client_id.property_account_receivable_id.id,
+                }
+                invoice = {
+                    'partner_id': self.client_id.id,
+                    'date_invoice': self.date,
+                    'type': 'out_invoice',
+                    'state': 'draft',
+                    'invoice_line_ids': [(0, 0, invoice_line)],
+                }
+                record.create(invoice)
+                record.action_invoice_open()
                 return super(DeliveryOrder, self).write(vals)
             else:
                 return super(DeliveryOrder, self).write(vals)
