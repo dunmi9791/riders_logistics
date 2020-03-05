@@ -122,12 +122,15 @@ class Collections(models.Model):
     collection_no = fields.Char(string="Collection Number", required=False,
                                 default=lambda self: _('New'),
                                 requires=False, readonly=True,)
-    amount = fields.Float(string="Amount", required=False, )
+    amount = fields.Float(string="Amount Collected", required=False, )
     delivery_order_id = fields.Many2one(comodel_name="delivery.order", string="Delivery Order", required=False, )
-    date = fields.Date(string="Date", required=False, )
+    date = fields.Date(string="Date", required=False, default=fields.Date.today())
     mode = fields.Selection(string="Mode of collection", selection=[('pos', 'POS'), ('cash', 'Cash'), ],
                             required=False, )
     client = fields.Char(string="Client", related="delivery_order_id.client_id.name", required=False, readonly=True, )
+    amount_collect = fields.Float(string="Amount to collect", related="delivery_order_id.amount")
+    state = fields.Selection(string="", selection=[('draft', 'Draft'), ('confirm', 'Confirmed'), ('post', 'Posted'), ],
+                             required=False, )
 
     @api.model
     def create(self, vals):
@@ -143,7 +146,7 @@ class ThirdParty(models.Model):
     _inherit = ['mail.thread', 'mail.activity.mixin']
 
     state = fields.Selection(string="", selection=[('draft', 'draft'),('packaged', 'Packaged'), ('sent', 'Sent'),
-                                                   ('received', 'Received')], required=False, )
+                                                   ('received', 'Received')], required=False, default='draft')
     delivery_ids = fields.Many2many(comodel_name="delivery.order", string="Packages",
                                     required=False, )
     origin = fields.Many2one(comodel_name="location.delivery", string="Originating Location")

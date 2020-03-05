@@ -53,7 +53,7 @@
                     <field name="delivery_address"/>
                     <field name="package_type"/>
                     <field name="is_payment_on_delivery"/>
-                    <field name="amount"/>
+                    <field name="amount" attrs="{'invisible': [('is_payment_on_delivery','=',False)]}"/>
                     <field name="additional_instruction"/>
                 </group>
         </group>
@@ -101,9 +101,9 @@
           <form name="Third party delivery Form">
               <header>
 
-                  <button name="park" string="Park" class="oe_highlight" states="draft" groups="" type="object"/>
-                  <button name="send" string="Send" class="oe_highlight" states="packaged" groups="" type="object"/>
-                  <button name="receive" string="Receive" class="oe_highlight" states="sent" groups="" type="object"/>
+                  <button name="park" string="Park" class="oe_highlight" states="draft"  type="object"/>
+                  <button name="send" string="Send" class="oe_highlight" states="packaged"  type="object"/>
+                  <button name="receive" string="Receive" class="oe_highlight" states="sent"  type="object"/>
 
 
 
@@ -136,7 +136,7 @@
         </div>
         <notebook>
             <page string="Packages">
-                <field name="delivery_ids" >
+                <field name="delivery_ids" widget="many2many_tags" options="{'no_create': True}" domain = "[('state', '!=', 'Delivered')]">
                 </field>
 
 
@@ -164,6 +164,46 @@
                     <field name="quantity"/>
 
                 </tree>
+            </field>
+        </record>
+
+
+        <record id="view_delivery_collection_tree" model="ir.ui.view">
+            <field name="name">delivery.collection.tree</field>
+            <field name="model">amount.collection</field>
+            <field name="arch" type="xml">
+                <tree string="collections">
+                    <field name="date"/>
+                    <field name="collection_no"/>
+                    <field name="client"/>
+                    <field name="amount" sum="Total Collection"/>
+                </tree>
+            </field>
+        </record>
+        <record id="view_delivery_collection_form" model="ir.ui.view">
+            <field name="name">delivery.collection.form</field>
+            <field name="model">amount.collection</field>
+            <field name="arch" type="xml">
+                <form string="Collections">
+                    <header>
+                        <field name="state" widget="statusbar" statusbar_visible="draft,confirm,post"/>
+                    </header>
+                    <sheet>
+                        <group>
+                            <group>
+                                <field name="collection_no"/>
+                                <field name="amount"/>
+                                <field name="delivery_order_id"/>
+                                <field name="date"/>
+                                <field name="mode"/>
+                            </group>
+                            <group>
+                                <field name="client"/>
+                                <field name="amount_collect"/>
+                            </group>
+                        </group>
+                    </sheet>
+                </form>
             </field>
         </record>
 
