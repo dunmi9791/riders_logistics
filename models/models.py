@@ -42,6 +42,7 @@ class DeliveryOrder(models.Model):
     product_id = fields.Many2one(comodel="product.product", string="Service Type")
     charges = fields.One2many('delivery.charges', 'order_id', 'Charges', required=False)
     invoice = fields.Many2one(comodel_name="account.invoice")
+    total_amount = fields.Float(string="Total Charge", compute="get_total")
 
 
 
@@ -78,6 +79,15 @@ class DeliveryOrder(models.Model):
     @api.multi
     def cancel(self):
         self.change_state('Canceled')
+
+    @api.multi
+    @api.depends('charges')
+    def get_total(self):
+        total = 0
+        for obj in self:
+            for each in obj.charges:
+                total += each.sub_total
+            obj.total_amount = total
 
     @api.model
     def create(self, vals):
@@ -183,5 +193,14 @@ class DeliveryCharges(models.Model):
     product_id = fields.Many2one(comodel_name="product.product")
     quantity = fields.Float(string="Quantity")
     order_id = fields.Many2one(comodel_name="delivery.order", string="order", required=False, )
+    unit_cost = fields.Float(string="Unit Cost")
+    sub_total = fields.Float(string="Total", compute="_get_total")
+
+    @api.one
+    @api.depends('unit_cost', 'quantity',)
+    def _get_total(self):
+        self.sub_total = self.unit_cost * self.quantity
+
+
 
 

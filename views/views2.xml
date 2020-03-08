@@ -162,6 +162,8 @@
 
                     <field name="product_id" />
                     <field name="quantity"/>
+                    <field name="unit_cost"/>
+                    <field name="sub_total"/>
 
                 </tree>
             </field>
