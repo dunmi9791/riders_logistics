@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 
 from odoo import models, fields, api
-from odoo.exceptions import UserError
 from odoo.tools.translate import _
+from odoo.exceptions import UserError, ValidationError
 from datetime import datetime
 from datetime import date
 
@@ -43,8 +43,8 @@ class DeliveryOrder(models.Model):
     charges = fields.One2many('delivery.charges', 'order_id', 'Charges', required=False)
     invoice = fields.Many2one(comodel_name="account.invoice")
     total_amount = fields.Float(string="Total Charge", compute="get_total")
-
-
+    service_id = fields.Many2one(comodel_name="product.template", string="Service type")
+    collected = fields.Boolean(string="Collected", default=True)
 
     @api.multi
     def is_allowed_transition(self, old_state, new_state):
@@ -71,10 +71,17 @@ class DeliveryOrder(models.Model):
     @api.multi
     def process(self):
         self.change_state('Processed')
+        self.collected = False
 
     @api.multi
     def receive(self):
-        self.change_state('Delivered')
+        if self.collected:
+            self.change_state('Delivered')
+        else:
+            raise ValidationError(
+                _('Collect Amount first'))
+
+
 
     @api.multi
     def cancel(self):
@@ -88,6 +95,26 @@ class DeliveryOrder(models.Model):
             for each in obj.charges:
                 total += each.sub_total
             obj.total_amount = total
+
+    @api.onchange('service_id')
+    def _onchange_service(self):
+        for rec in self:
+            lines = [(5, 0, 0)]
+            for line in self.service_id.product_variant_ids:
+                val = {
+                    'product_id': line.id,
+                    'quantity': 1
+                }
+                lines.append((0, 0, val))
+            rec.charges = lines
+
+    @api.constrains('amount')
+    def check_amount(self):
+        for rec in self:
+            if rec.amount <= 1:
+                raise ValidationError(
+                    _('Amount to collect has to be at Zero'))
+
 
     @api.model
     def create(self, vals):
@@ -139,8 +166,41 @@ class Collections(models.Model):
                             required=False, )
     client = fields.Char(string="Client", related="delivery_order_id.client_id.name", required=False, readonly=True, )
     amount_collect = fields.Float(string="Amount to collect", related="delivery_order_id.amount")
-    state = fields.Selection(string="", selection=[('draft', 'Draft'), ('confirm', 'Confirmed'), ('post', 'Posted'), ],
-                             required=False, )
+    state = fields.Selection(string="", selection=[('draft', 'Draft'), ('collect', 'Collected'),
+                                                   ('confirm', 'Confirmed'), ('post', 'Posted'), ],
+                             default="draft", required=False, )
+
+    @api.multi
+    def is_allowed_transition(self, old_state, new_state):
+        allowed = [('draft', 'collect'),
+                   ('collect', 'confirm'),
+                   ('confirm', 'post'), ]
+        return (old_state, new_state) in allowed
+
+    @api.multi
+    def change_state(self, new_state):
+        for collect in self:
+            if collect.is_allowed_transition(collect.state, new_state):
+                collect.state = new_state
+            else:
+                msg = _('Moving from %s to %s is not allowed') % (collect.state, new_state)
+                raise UserError(msg)
+
+    @api.multi
+    def collect(self):
+        self.change_state('collect')
+
+    @api.multi
+    def confirm(self):
+        self.change_state('confirm')
+
+    @api.multi
+    def post(self):
+        self.change_state('post')
+
+    _sql_constraints = [
+        ('collection_unique', 'unique(delivery_order_id)', 'Collection already entered for this delivery')
+    ]
 
     @api.model
     def create(self, vals):
@@ -193,7 +253,7 @@ class DeliveryCharges(models.Model):
     product_id = fields.Many2one(comodel_name="product.product")
     quantity = fields.Float(string="Quantity")
     order_id = fields.Many2one(comodel_name="delivery.order", string="order", required=False, )
-    unit_cost = fields.Float(string="Unit Cost")
+    unit_cost = fields.Float(string="Unit Cost", related="product_id.lst_price")
     sub_total = fields.Float(string="Total", compute="_get_total")
 
     @api.one

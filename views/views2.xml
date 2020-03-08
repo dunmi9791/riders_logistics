@@ -29,6 +29,8 @@
                   <button name="authorise" string="Pick Up" class="oe_highlight" states="Requested" groups="" type="object"/>
                   <button name="process" string="Process" class="oe_highlight" states="picked,Requested" groups="" type="object"/>
                   <button name="receive" string="Delivered" class="oe_highlight" states="Processed" groups="" type="object"/>
+                  <button name="%(riders_logistics.collect_amount_wizard)d" string="Collect Amount" type="action"
+                            class="oe_highlight"  context="{'default_delivery_order_id': active_id}" attrs="{'invisible':[('collected','=',True)]}"/>
 
 
 
@@ -46,6 +48,7 @@
                     <field name="client_id" domain="[('customer', '=', True)]" />
                     <field name="pickup_location"/>
                     <field name="date"/>
+                    <field name="collected" invisible="1"/>
 
                 </group>
                 <group>
@@ -55,6 +58,8 @@
                     <field name="is_payment_on_delivery"/>
                     <field name="amount" attrs="{'invisible': [('is_payment_on_delivery','=',False)]}"/>
                     <field name="additional_instruction"/>
+                    <field name="service_id"/>
+                    <field name="total_amount"/>
                 </group>
         </group>
               <group>
@@ -188,7 +193,11 @@
             <field name="arch" type="xml">
                 <form string="Collections">
                     <header>
-                        <field name="state" widget="statusbar" statusbar_visible="draft,confirm,post"/>
+                        <button name="collect" string="Collect" class="oe_highlight" states="draft"  type="object"/>
+                  <button name="confirm" string="Confirm" class="oe_highlight" states="collect"  type="object"/>
+                  <button name="post" string="Post" class="oe_highlight" states="post"  type="object"/>
+
+                        <field name="state" widget="statusbar" statusbar_visible="draft,collect,confirm,post"/>
                     </header>
                     <sheet>
                         <group>
