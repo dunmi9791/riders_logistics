@@ -1,4 +1,4 @@
-from odoo import models, fields, api
+from odoo import models, fields, api, _
 from odoo.exceptions import UserError, ValidationError
 
 
@@ -18,8 +18,7 @@ class CollectAmount(models.TransientModel):
     def check_amount(self):
         for rec in self:
             if rec.amount != rec.amount_collect:
-                raise ValidationError(
-                    _('Amount collected is not correct'))
+                raise UserError(_("Amount collected must be equal to Amount to collect."))
 
     def collect_amount(self):
         collection = self.env['amount.collection']
