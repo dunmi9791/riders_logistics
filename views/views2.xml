@@ -49,6 +49,8 @@
                     <field name="pickup_location"/>
                     <field name="date"/>
                     <field name="collected" invisible="1"/>
+                    <field name="invoice_status" invisible="1"/>
+                    <field name="sale_obj" invisible="1"/>
 
                 </group>
                 <group>
@@ -184,6 +186,8 @@
                     <field name="collection_no"/>
                     <field name="client"/>
                     <field name="amount" sum="Total Collection"/>
+                    <field name="create_uid" string="Collected By"/>
+                    <field name="state"/>
                 </tree>
             </field>
         </record>
@@ -195,7 +199,8 @@
                     <header>
                         <button name="collect" string="Collect" class="oe_highlight" states="draft"  type="object"/>
                   <button name="confirm" string="Confirm" class="oe_highlight" states="collect"  type="object"/>
-                  <button name="post" string="Post" class="oe_highlight" states="post"  type="object"/>
+                  <button name="post" string="Post" class="oe_highlight" states="confirm"  type="object"/>
+                        <button name="bill" string="Bill" class="oe_highlight" states="post"  type="object"/>
 
                         <field name="state" widget="statusbar" statusbar_visible="draft,collect,confirm,post"/>
                     </header>

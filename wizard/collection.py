@@ -26,7 +26,8 @@ class CollectAmount(models.TransientModel):
             'amount': self.amount,
             'delivery_order_id': self.delivery_order_id.id,
             'mode': self.mode,
-            'state': 'collect'
+            'state': 'collect',
+            'client_id': self.delivery_order_id.client_id.id
         }
         collection.create(vals)
         self.delivery_order_id.collected = True
