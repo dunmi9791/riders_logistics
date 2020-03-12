@@ -5,7 +5,12 @@
     <record model="ir.actions.act_window" id="action_riders_deliveryorder">
         <field name="name">Delivery Order</field>
         <field name="res_model">delivery.order</field>
-        <field name="view_mode">tree,form,kanban</field>
+        <field name="view_mode">tree,form,kanban,graph</field>
+    </record>
+      <record model="ir.actions.act_window" id="action_riders_deliveryorder_graph">
+        <field name="name">Delivery Order Graph</field>
+        <field name="res_model">delivery.order</field>
+        <field name="view_mode">graph</field>
     </record>
 
        <record model="ir.actions.act_window" id="action_riders_deliverycollections">
@@ -28,15 +33,22 @@
         <field name="res_model">location.delivery</field>
         <field name="view_mode">tree,form</field>
     </record>
+      <record id="sale.action_orders" model="ir.actions.act_window">
+          <field name="name">Delivered Orders</field>
+          </record>
 
     <menuitem name="Delivery Order " id="riders_delivery_menu" parent="riders_logistics_root_menu"
-              sequence="1" />
+              sequence="2" />
      <menuitem name="Deliveries" id="riders_deliveries_menu" parent="riders_delivery_menu"
               sequence="2" action="action_riders_deliveryorder"/>
       <menuitem name="Clients" id="riders_clients_menu" parent="riders_logistics_root_menu"
               sequence="3" action="base.action_partner_customer_form"/>
-      <menuitem name="Collections" id="riders_collections_menu" parent="riders_logistics_root_menu"
-              sequence="4" action="action_riders_deliverycollections"/>
+      <menuitem name="Finance" id="riders_finance_menu" parent="riders_logistics_root_menu"
+              sequence="4"/>
+      <menuitem name="Collections" id="riders_collections_menu" parent="riders_finance_menu"
+              sequence="2" action="action_riders_deliverycollections"/>
+      <menuitem name="Delivered Orders" id="riders_deliveredorders_menu" parent="riders_finance_menu"
+              sequence="1" action="sale.action_orders"/>
       <menuitem name="Third Party Delivery " id="riders_thirdparty_menu" parent="riders_logistics_root_menu"
               sequence="5" />
       <menuitem name="Third Party Deliveries" id="riders_thirdparty_delivery_menu" parent="riders_thirdparty_menu"
@@ -49,6 +61,45 @@
               sequence="6" />
       <menuitem name="Locations" id="riders_location_menu" parent="riders_settings_menu"
               sequence="7" action="action_riders_locations"/>
+
+     <!-- Dash Board-->
+      <record id="dashboard_form_view" model="ir.ui.view">
+        <field name="name">Dashboard Form</field>
+        <field name="model">board.board</field>
+        <field name="type">form</field>
+        <field name="arch" type="xml">
+            <form string="Dashboard">
+                <board style="1-2">
+                    <column>
+                        <action
+                            string="Partners by Amount Collected"
+                            name="%(action_riders_deliveryorder_graph)d"/>
+
+                    </column>
+                    <column>
+
+
+                    </column>
+                </board>
+            </form>
+        </field>
+    </record>
+
+    <record id="delivery_dashboard" model="ir.actions.act_window">
+        <field name="name">Dashboard</field>
+        <field name="res_model">board.board</field>
+        <field name="view_mode">form</field>
+        <field name="usage">menu</field>
+        <field name="view_id" ref="dashboard_form_view"/>
+    </record>
+
+    <menuitem
+        name="Dashboard"
+        parent="riders_logistics_root_menu"
+        action="delivery_dashboard"
+        sequence="1"
+        id="menu_dashboard"/>
+
     <!-- explicit list view definition -->
     <!--
     <record model="ir.ui.view" id="riders_logistics.list">

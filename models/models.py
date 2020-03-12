@@ -235,6 +235,7 @@ class Collections(models.Model):
     _name = 'amount.collection'
     _rec_name = 'collection_no'
     _description = 'Amount collected on delivery'
+    _inherit = ['mail.thread', 'mail.activity.mixin']
 
     collection_no = fields.Char(string="Collection Number", required=False,
                                 default=lambda self: _('New'),
@@ -254,15 +255,17 @@ class Collections(models.Model):
 
     amount_collect = fields.Float(string="Amount to collect", related="delivery_order_id.amount")
     state = fields.Selection(string="", selection=[('draft', 'Draft'), ('collect', 'Collected'),
-                                                   ('confirm', 'Confirmed'), ('post', 'Posted'), ],
-                             default="draft", required=False, )
+                                                   ('confirm', 'Confirmed'), ('post', 'Posted'),
+                                                   ('finalise', 'Finalised'), ],
+                             default="draft", required=False, track_visibility="onchange" )
     purchase_obj = fields.Many2one('purchase.order', invisible=1)
 
     @api.multi
     def is_allowed_transition(self, old_state, new_state):
         allowed = [('draft', 'collect'),
                    ('collect', 'confirm'),
-                   ('confirm', 'post'), ]
+                   ('confirm', 'post'),
+                   ('post', 'finalise'), ]
         return (old_state, new_state) in allowed
 
     @api.multi
@@ -304,6 +307,7 @@ class Collections(models.Model):
     @api.multi
     def bill(self):
         self.purchase_obj.create_invoice()
+        self.change_state('finalise')
 
     _sql_constraints = [
         ('collection_unique', 'unique(delivery_order_id)', 'Collection already entered for this delivery')
