@@ -36,6 +36,16 @@
       <record id="sale.action_orders" model="ir.actions.act_window">
           <field name="name">Delivered Orders</field>
           </record>
+      <record model="ir.actions.act_window" id="action_riders_states">
+        <field name="name">states</field>
+        <field name="res_model">states.nigeria</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+      <record model="ir.actions.act_window" id="action_riders_lga">
+        <field name="name">LGA</field>
+        <field name="res_model">local.governments</field>
+        <field name="view_mode">tree,form</field>
+    </record>
 
     <menuitem name="Delivery Order " id="riders_delivery_menu" parent="riders_logistics_root_menu"
               sequence="2" />
@@ -61,6 +71,10 @@
               sequence="6" />
       <menuitem name="Locations" id="riders_location_menu" parent="riders_settings_menu"
               sequence="7" action="action_riders_locations"/>
+      <menuitem name="states" id="riders_state_menu" parent="riders_settings_menu"
+              sequence="8" action="action_riders_states"/>
+      <menuitem name="Lga" id="riders_lga_menu" parent="riders_settings_menu"
+              sequence="9" action="action_riders_lga"/>
 
      <!-- Dash Board-->
       <record id="dashboard_form_view" model="ir.ui.view">

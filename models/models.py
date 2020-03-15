@@ -20,7 +20,7 @@ class DeliveryOrder(models.Model):
                            default=lambda self: _('New'),
                            requires=False, readonly=True, )
     delivery_address = fields.Text(string="Delivery Address", required=True, )
-    pickup_location = fields.Many2one(comodel_name="res.partner", string="Pickup Location", required=False, )
+    pickup_location = fields.Many2one(comodel_name="pickup.location", string="Pickup Location", required=False, )
     height = fields.Float(string="Height (m)", required=False, )
     width = fields.Float(string="Width (m)", required=False, )
     length = fields.Float(string="Length (m)", required=False, )
@@ -36,7 +36,10 @@ class DeliveryOrder(models.Model):
                              track_visibility='onchange', )
     date = fields.Date(string="Date", required=False, default=fields.Date.today())
     consignee = fields.Char(string="Consignee Name", required=True,)
+    consignee_number = fields.Char(string="Consignee Mobile Number", required=True)
     additional_instruction = fields.Text(string="Additional Instructions", required=False, )
+    states = fields.Many2one(comodel_name='states.nigeria', string='State')
+    lga = fields.Many2one(comodel_name='local.governments', string='LGA')
     client_id = fields.Many2one(comodel_name="res.partner", string="Client", required=True, change_default=True, index=True, track_visibility='always', track_sequence=1,)
     thirdparty_id = fields.Many2one(comodel_name="thirdparty.delivery", string="Third Party courier", required=False, )
     thirdparty_ids = fields.One2many(comodel_name="thirdparty.delivery", inverse_name="delivery_ids",
@@ -68,42 +71,50 @@ class DeliveryOrder(models.Model):
     user_id = fields.Many2one('res.users', string='Salesperson', index=True, track_visibility='onchange',
                               track_sequence=2, default=lambda self: self.env.user)
 
-
-
-    @api.multi
     @api.onchange('client_id')
     def onchange_client_id(self):
-        """
-        Update the following fields when the partner is changed:
-        - Pricelist
-        - Payment terms
-        - Invoice address
-        - Delivery address
-        """
-        if not self.client_id:
-            self.update({
-                'partner_invoice_id': False,
-                'partner_shipping_id': False,
-                'payment_term_id': False,
-                'fiscal_position_id': False,
-            })
-            return
+        for rec in self:
+            return {'domain': {'pickup_location': [('client_id', '=', rec.client_id.id)]}}
 
-        addr = self.client_id.address_get(['delivery', 'invoice'])
-        values = {
-            'pricelist_id': self.client_id.property_product_pricelist and self.client_id.property_product_pricelist.id or False,
-            'payment_term_id': self.client_id.property_payment_term_id and self.client_id.property_payment_term_id.id or False,
-            'partner_invoice_id': addr['invoice'],
-            'partner_shipping_id': addr['delivery'],
-            'user_id': self.client_id.user_id.id or self.client_id.commercial_partner_id.user_id.id or self.env.uid
-        }
-        if self.env['ir.config_parameter'].sudo().get_param(
-                'sale.use_sale_note') and self.env.user.company_id.sale_note:
-            values['note'] = self.with_context(lang=self.client_id.lang).env.user.company_id.sale_note
+    @api.onchange('states')
+    def onchange_states(self):
+        for rec in self:
+            return {'domain': {'lga': [('state', '=', rec.states.id)]}}
 
-        if self.client_id.team_id:
-            values['team_id'] = self.client_id.team_id.id
-        self.update(values)
+    # @api.multi
+    # @api.onchange('client_id')
+    # def onchange_client_id(self):
+    #     """
+    #     Update the following fields when the partner is changed:
+    #     - Pricelist
+    #     - Payment terms
+    #     - Invoice address
+    #     - Delivery address
+    #     """
+    #     if not self.client_id:
+    #         self.update({
+    #             'partner_invoice_id': False,
+    #             'partner_shipping_id': False,
+    #             'payment_term_id': False,
+    #             'fiscal_position_id': False,
+    #         })
+    #         return
+    #
+    #     addr = self.client_id.address_get(['delivery', 'invoice'])
+    #     values = {
+    #         'pricelist_id': self.client_id.property_product_pricelist and self.client_id.property_product_pricelist.id or False,
+    #         'payment_term_id': self.client_id.property_payment_term_id and self.client_id.property_payment_term_id.id or False,
+    #         'partner_invoice_id': addr['invoice'],
+    #         'partner_shipping_id': addr['delivery'],
+    #         'user_id': self.client_id.user_id.id or self.client_id.commercial_partner_id.user_id.id or self.env.uid
+    #     }
+    #     if self.env['ir.config_parameter'].sudo().get_param(
+    #             'sale.use_sale_note') and self.env.user.company_id.sale_note:
+    #         values['note'] = self.with_context(lang=self.client_id.lang).env.user.company_id.sale_note
+    #
+    #     if self.client_id.team_id:
+    #         values['team_id'] = self.client_id.team_id.id
+    #     self.update(values)
 
     @api.multi
     def is_allowed_transition(self, old_state, new_state):
@@ -474,6 +485,44 @@ class PurchaseInherit(models.Model):
         #         }
         # record = self.env['account.invoice'].create(inv_data)
         # return record
+
+
+class PickupLocation(models.Model):
+    _name = 'pickup.location'
+    _rec_name = 'name'
+    _description = 'Pickup Locations'
+
+    name = fields.Char(string="Name")
+    full_address = fields.Text(string="Full Address", required=False, )
+    client_id = fields.Many2one(comodel_name="res.partner", string="Client")
+
+
+class Clients(models.Model):
+    _inherit = 'res.partner'
+
+    pickup_locations_ids = fields.One2many(comodel_name="pickup.location", inverse_name="client_id",
+                                           string="Pickup Locations", required=False, )
+    supplier = fields.Boolean(string="is a vendor", default=True)
+
+
+class States(models.Model):
+    _name = 'states.nigeria'
+    _rec_name = 'name'
+    _description = 'States in Nigeria'
+
+    name = fields.Char()
+
+
+class LocalGovernments(models.Model):
+    _name = 'local.governments'
+    _rec_name = 'name'
+    _description = 'Local governments in Nigeria'
+
+    name = fields.Char()
+    state = fields.Many2one(comodel_name='states.nigeria', string='State')
+
+
+
 
 
 
