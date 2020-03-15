@@ -8,7 +8,6 @@ from datetime import date
 import time
 
 
-
 class DeliveryOrder(models.Model):
     _name = 'delivery.order'
     _rec_name = 'order_no'
@@ -35,12 +34,13 @@ class DeliveryOrder(models.Model):
                                                    ('Canceled', 'Canceled'), ], required=False, default='Requested',
                              track_visibility='onchange', )
     date = fields.Date(string="Date", required=False, default=fields.Date.today())
-    consignee = fields.Char(string="Consignee Name", required=True,)
+    consignee = fields.Char(string="Consignee Name", required=True, )
     consignee_number = fields.Char(string="Consignee Mobile Number", required=True)
     additional_instruction = fields.Text(string="Additional Instructions", required=False, )
     states = fields.Many2one(comodel_name='states.nigeria', string='State')
     lga = fields.Many2one(comodel_name='local.governments', string='LGA')
-    client_id = fields.Many2one(comodel_name="res.partner", string="Client", required=True, change_default=True, index=True, track_visibility='always', track_sequence=1,)
+    client_id = fields.Many2one(comodel_name="res.partner", string="Client", required=True, change_default=True,
+                                index=True, track_visibility='always', track_sequence=1, )
     thirdparty_id = fields.Many2one(comodel_name="thirdparty.delivery", string="Third Party courier", required=False, )
     thirdparty_ids = fields.One2many(comodel_name="thirdparty.delivery", inverse_name="delivery_ids",
                                      string="Third Party Courier", required=False, )
@@ -54,67 +54,71 @@ class DeliveryOrder(models.Model):
         ('invoiced', 'Fully Invoiced'),
         ('to invoice', 'To Invoice'),
         ('no', 'Nothing to Invoice')
-    ], string='Invoice Status', invisible=1,)
+    ], string='Invoice Status', invisible=1, )
     collected = fields.Boolean(string="Collected", default=True)
     sale_obj = fields.Many2one('sale.order', invisible=1)
-    partner_invoice_id = fields.Many2one('res.partner', string='Invoice Address', readonly=True, required=True,
-                                         states={'Requested': [('readonly', False)], 'Processed': [('readonly', False)]},
+    partner_invoice_id = fields.Many2one('res.partner', string='Invoice Address', readonly=True, required=False,
+                                         states={'Requested': [('readonly', False)],
+                                                 'Processed': [('readonly', False)]},
                                          help="Invoice address for current sales order.")
-    partner_shipping_id = fields.Many2one('res.partner', string='Delivery Address', readonly=True, required=True,
-                                          states={'Requested': [('readonly', False)], 'Processed': [('readonly', False)]},
+    partner_shipping_id = fields.Many2one('res.partner', string='Delivery Address', readonly=True, required=False,
+                                          states={'Requested': [('readonly', False)],
+                                                  'Processed': [('readonly', False)]},
                                           help="Delivery address for current sales order.")
     payment_term_id = fields.Many2one('account.payment.term', string='Payment Terms', oldname='payment_term')
     fiscal_position_id = fields.Many2one('account.fiscal.position', oldname='fiscal_position', string='Fiscal Position')
-    pricelist_id = fields.Many2one('product.pricelist', string='Pricelist', required=True, readonly=True,
+    pricelist_id = fields.Many2one('product.pricelist', string='Pricelist', required=False, readonly=True,
                                    states={'Requested': [('readonly', False)], 'Delivered': [('readonly', False)]},
                                    help="Pricelist for current sales order.")
     user_id = fields.Many2one('res.users', string='Salesperson', index=True, track_visibility='onchange',
                               track_sequence=2, default=lambda self: self.env.user)
 
-    @api.onchange('client_id')
-    def onchange_client_id(self):
-        for rec in self:
-            return {'domain': {'pickup_location': [('client_id', '=', rec.client_id.id)]}}
+    # @api.onchange('client_id')
+    # def onchange_client_id(self):
+    #     for rec in self:
+    #         return {'domain': {'pickup_location': [('client_id', '=', rec.client_id.id)]}}
 
     @api.onchange('states')
     def onchange_states(self):
         for rec in self:
             return {'domain': {'lga': [('state', '=', rec.states.id)]}}
 
-    # @api.multi
-    # @api.onchange('client_id')
-    # def onchange_client_id(self):
-    #     """
-    #     Update the following fields when the partner is changed:
-    #     - Pricelist
-    #     - Payment terms
-    #     - Invoice address
-    #     - Delivery address
-    #     """
-    #     if not self.client_id:
-    #         self.update({
-    #             'partner_invoice_id': False,
-    #             'partner_shipping_id': False,
-    #             'payment_term_id': False,
-    #             'fiscal_position_id': False,
-    #         })
-    #         return
-    #
-    #     addr = self.client_id.address_get(['delivery', 'invoice'])
-    #     values = {
-    #         'pricelist_id': self.client_id.property_product_pricelist and self.client_id.property_product_pricelist.id or False,
-    #         'payment_term_id': self.client_id.property_payment_term_id and self.client_id.property_payment_term_id.id or False,
-    #         'partner_invoice_id': addr['invoice'],
-    #         'partner_shipping_id': addr['delivery'],
-    #         'user_id': self.client_id.user_id.id or self.client_id.commercial_partner_id.user_id.id or self.env.uid
-    #     }
-    #     if self.env['ir.config_parameter'].sudo().get_param(
-    #             'sale.use_sale_note') and self.env.user.company_id.sale_note:
-    #         values['note'] = self.with_context(lang=self.client_id.lang).env.user.company_id.sale_note
-    #
-    #     if self.client_id.team_id:
-    #         values['team_id'] = self.client_id.team_id.id
-    #     self.update(values)
+    @api.multi
+    @api.onchange('client_id')
+    def onchange_client_id(self):
+        for rec in self:
+            return {'domain': {'pickup_location': [('client_id', '=', rec.client_id.id)]}}
+        """
+        Update the following fields when the partner is changed:
+        - Pricelist
+        - Payment terms
+        - Invoice address
+        - Delivery address
+        """
+        if not self.client_id:
+            self.update({
+                'partner_invoice_id': False,
+                'partner_shipping_id': False,
+                'payment_term_id': False,
+                'fiscal_position_id': False,
+            })
+            return
+
+        addr = self.client_id.address_get(['delivery', 'invoice'])
+        values = {
+            'pricelist_id': self.client_id.property_product_pricelist and self.client_id.property_product_pricelist.id or False,
+            'payment_term_id': self.client_id.property_payment_term_id and self.client_id.property_payment_term_id.id or False,
+            'partner_invoice_id': addr['invoice'],
+            'partner_shipping_id': addr['delivery'],
+            'user_id': self.client_id.user_id.id or self.client_id.commercial_partner_id.user_id.id or self.env.uid
+        }
+        if self.env['ir.config_parameter'].sudo().get_param(
+            'sale.use_sale_note') and self.env.user.company_id.sale_note:
+            values['note'] = self.with_context(lang=self.client_id.lang).env.user.company_id.sale_note
+
+        if self.client_id.team_id:
+            values['team_id'] = self.client_id.team_id.id
+        self.update(values)
 
     @api.multi
     def is_allowed_transition(self, old_state, new_state):
@@ -141,7 +145,6 @@ class DeliveryOrder(models.Model):
     @api.multi
     def process(self):
         self.change_state('Processed')
-        self.collected = False
         sale_obj = self.env['sale.order'].create({'partner_id': self.client_id.id,
                                                   'partner_invoice_id': self.client_id.id,
                                                   'partner_shipping_id': self.client_id.id,
@@ -151,28 +154,34 @@ class DeliveryOrder(models.Model):
                                             'price_unit': self.charges.unit_cost,
                                             'order_id': sale_obj.id
                                             })
+        if self.is_payment_on_delivery:
+            self.collected = False
 
     @api.multi
     def receive(self):
-        if self.collected:
+        if self.is_payment_on_delivery:
+            if self.collected:
+                self.change_state('Delivered')
+                if self.sale_obj.state in ['draft', 'sent']:
+                    self.sale_obj.action_confirm()
+                self.invoice_status = self.sale_obj.invoice_status
+                # return {
+                #     'name': 'Invoice Order',
+                #     'view_type': 'form',
+                #     'view_mode': 'form',
+                #     'res_model': 'sale.advance.payment.inv',
+                #     'type': 'ir.actions.act_window',
+                #     'context': {'delivery_sale_obj': self.sale_obj.id},
+                #     'target': 'new'
+                # }
+            else:
+                raise ValidationError(
+                    _('Collect Amount first'))
+        else:
             self.change_state('Delivered')
             if self.sale_obj.state in ['draft', 'sent']:
                 self.sale_obj.action_confirm()
             self.invoice_status = self.sale_obj.invoice_status
-            # return {
-            #     'name': 'Invoice Order',
-            #     'view_type': 'form',
-            #     'view_mode': 'form',
-            #     'res_model': 'sale.advance.payment.inv',
-            #     'type': 'ir.actions.act_window',
-            #     'context': {'delivery_sale_obj': self.sale_obj.id},
-            #     'target': 'new'
-            # }
-        else:
-            raise ValidationError(
-                _('Collect Amount first'))
-
-
 
     @api.multi
     def cancel(self):
@@ -202,10 +211,10 @@ class DeliveryOrder(models.Model):
     @api.constrains('amount')
     def check_amount(self):
         for rec in self:
-            if rec.amount <= 1:
-                raise ValidationError(
-                    _('Amount to collect has to be at Zero'))
-
+            if rec.is_payment_on_delivery:
+                if rec.amount <= 1:
+                    raise ValidationError(
+                        _('Amount to collect has to be greater than Zero'))
 
     @api.model
     def create(self, vals):
@@ -242,6 +251,7 @@ class DeliveryOrder(models.Model):
     #         return super(DeliveryOrder, self).write(vals)
     #
 
+
 class Collections(models.Model):
     _name = 'amount.collection'
     _rec_name = 'collection_no'
@@ -250,7 +260,7 @@ class Collections(models.Model):
 
     collection_no = fields.Char(string="Collection Number", required=False,
                                 default=lambda self: _('New'),
-                                requires=False, readonly=True,)
+                                requires=False, readonly=True, )
     amount = fields.Float(string="Amount Collected", required=False, )
     delivery_order_id = fields.Many2one(comodel_name="delivery.order", string="Delivery Order", required=False, )
     date = fields.Date(string="Date", required=False, default=fields.Date.today())
@@ -262,13 +272,13 @@ class Collections(models.Model):
         ('no', 'Nothing to Bill'),
         ('to invoice', 'Waiting Bills'),
         ('invoiced', 'No Bill to Receive'),
-    ], string='Billing Status',  readonly=True, copy=False, default='no')
+    ], string='Billing Status', readonly=True, copy=False, default='no')
 
     amount_collect = fields.Float(string="Amount to collect", related="delivery_order_id.amount")
     state = fields.Selection(string="", selection=[('draft', 'Draft'), ('collect', 'Collected'),
                                                    ('confirm', 'Confirmed'), ('post', 'Posted'),
                                                    ('finalise', 'Finalised'), ],
-                             default="draft", required=False, track_visibility="onchange" )
+                             default="draft", required=False, track_visibility="onchange")
     purchase_obj = fields.Many2one('purchase.order', invisible=1)
 
     @api.multi
@@ -296,7 +306,7 @@ class Collections(models.Model):
     def confirm(self):
         self.change_state('confirm')
         purchase_obj = self.env['purchase.order'].create({'partner_id': self.client_id.id,
-                                                         'collection_id': self.id})
+                                                          'collection_id': self.id})
         self.purchase_obj = purchase_obj
         self.env['purchase.order.line'].create({'name': 'collection',
                                                 'product_id': 2,
@@ -337,7 +347,7 @@ class ThirdParty(models.Model):
     _description = 'collection of bulk packages via third party'
     _inherit = ['mail.thread', 'mail.activity.mixin']
 
-    state = fields.Selection(string="", selection=[('draft', 'draft'),('packaged', 'Packaged'), ('sent', 'Sent'),
+    state = fields.Selection(string="", selection=[('draft', 'draft'), ('packaged', 'Packaged'), ('sent', 'Sent'),
                                                    ('received', 'Received')], required=False, default='draft')
     delivery_ids = fields.Many2many(comodel_name="delivery.order", string="Packages",
                                     required=False, )
@@ -378,7 +388,7 @@ class DeliveryCharges(models.Model):
     sub_total = fields.Float(string="Total", compute="_get_total")
 
     @api.one
-    @api.depends('unit_cost', 'quantity',)
+    @api.depends('unit_cost', 'quantity', )
     def _get_total(self):
         self.sub_total = self.unit_cost * self.quantity
 
@@ -442,14 +452,12 @@ class DeliveryManagementInvoice(models.TransientModel):
 
 
 class SaleInherit(models.Model):
-
     _inherit = 'sale.order'
 
     delivery_id = fields.Many2one(comodel_name="delivery.order", string="Delivery Order", required=False, )
 
 
 class PurchaseInherit(models.Model):
-
     _inherit = 'purchase.order'
 
     collection_id = fields.Many2one(comodel_name="amount.collection", string="Collection Reference", required=False, )
@@ -520,15 +528,3 @@ class LocalGovernments(models.Model):
 
     name = fields.Char()
     state = fields.Many2one(comodel_name='states.nigeria', string='State')
-
-
-
-
-
-
-
-
-
-
-
-

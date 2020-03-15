@@ -19,7 +19,7 @@
     'version': '0.1',
 
     # any module necessary for this one to work correctly
-    'depends': ['base', 'mail', 'sale', 'account', 'purchase', 'board'],
+    'depends': ['base', 'mail', 'sale_management', 'account', 'purchase', 'board', 'sale'],
 
     # always loaded
     'data': [
