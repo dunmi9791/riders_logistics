@@ -1,5 +1,39 @@
 <odoo>
     <data>
+
+         <template id="deliveries" name="Deliveries">
+            <t t-call="website.layout">
+                <div class="oe_structure"/>
+                <div class="container">
+                    <h1>Deliveries</h1>
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Delivery Number</th>
+                                <th>Amount Collected</th>
+                                <th>State</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <t t-foreach="objects" t-as="obj">
+                                <tr>
+                                    <td>
+                                        <t t-esc="obj.order_no"/>
+                                    </td>
+                                    <td>
+                                        <t t-esc="obj.amount"/>
+                                    </td>
+                                    <td>
+                                        <t t-esc="obj.state"/>
+                                    </td>
+                                </tr>
+                            </t>
+                        </tbody>
+                    </table>
+                    <div class="oe_structure"/>
+                </div>
+            </t>
+        </template>
         <!-- <template id="listing"> -->
         <!--   <ul> -->
         <!--     <li t-foreach="objects" t-as="object"> -->
