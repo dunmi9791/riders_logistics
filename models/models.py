@@ -19,6 +19,8 @@ class DeliveryOrder(models.Model):
                            default=lambda self: _('New'),
                            requires=False, readonly=True, )
     delivery_address = fields.Text(string="Delivery Address", required=True, )
+    client_id = fields.Many2one(comodel_name="res.partner", string="Client", required=True, change_default=True,
+                                index=True, track_visibility='always', track_sequence=1, )
     pickup_location = fields.Many2one(comodel_name="pickup.location", string="Pickup Location", required=False, )
     height = fields.Float(string="Height (m)", required=False, )
     width = fields.Float(string="Width (m)", required=False, )
@@ -39,8 +41,6 @@ class DeliveryOrder(models.Model):
     additional_instruction = fields.Text(string="Additional Instructions", required=False, )
     states = fields.Many2one(comodel_name='states.nigeria', string='State')
     lga = fields.Many2one(comodel_name='local.governments', string='LGA')
-    client_id = fields.Many2one(comodel_name="res.partner", string="Client", required=True, change_default=True,
-                                index=True, track_visibility='always', track_sequence=1, )
     thirdparty_id = fields.Many2one(comodel_name="thirdparty.delivery", string="Third Party courier", required=False, )
     thirdparty_ids = fields.One2many(comodel_name="thirdparty.delivery", inverse_name="delivery_ids",
                                      string="Third Party Courier", required=False, )

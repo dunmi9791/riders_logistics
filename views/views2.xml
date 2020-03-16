@@ -63,7 +63,7 @@
                     <field name="is_payment_on_delivery"/>
                     <field name="amount" attrs="{'invisible': [('is_payment_on_delivery','=',False)]}"/>
                     <field name="additional_instruction"/>
-                    <field name="service_id"/>
+                    <field name="service_id" domain="[('sale_ok', '=', True)]"/>
                     <field name="total_amount"/>
                 </group>
         </group>
