@@ -2,8 +2,15 @@
     <data>
 
          <template id="deliveries" name="Deliveries">
-            <t t-call="website.layout">
-                <div class="oe_structure"/>
+
+                <t t-call="portal.portal_layout">
+        <t t-set="breadcrumbs_searchbar" t-value="True"/>
+
+        <t t-call="portal.portal_searchbar">
+            <t t-set="title">Deliveries</t>
+        </t>
+
+
                 <div class="container">
                     <h1>Deliveries</h1>
                     <table class="table table-hover">
@@ -12,6 +19,7 @@
                                 <th>Delivery Number</th>
                                 <th>Amount Collected</th>
                                 <th>State</th>
+                                <th>Charge</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -26,6 +34,9 @@
                                     <td>
                                         <t t-esc="obj.state"/>
                                     </td>
+                                    <td>
+                                        <t t-esc="obj.total_amount"/>
+                                    </td>
                                 </tr>
                             </t>
                         </tbody>
@@ -34,6 +45,56 @@
                 </div>
             </t>
         </template>
+        <template id="portal_my_deliveries" name="My Deliveries">
+      <t t-call="portal.portal_layout">
+        <t t-set="breadcrumbs_searchbar" t-value="True"/>
+
+        <t t-call="portal.portal_searchbar">
+            <t t-set="title">Deliveries</t>
+        </t>
+        <t t-if="not deliveries">
+            <p>There are currently no deliveries for your account.</p>
+        </t>
+        <t t-if="deliveries" t-call="portal.portal_table">
+            <thead>
+                <tr class="active">
+                    <th>Delivery #</th>
+                    <th>Invoice Date</th>
+                    <th class='d-none d-md-table-cell'>Due Date</th>
+                    <th/>
+                    <th class="text-right">Amount Due</th>
+                </tr>
+            </thead>
+            <tbody>
+                <t t-foreach="deliveries" t-as="delivery">
+                    <tr>
+                        <td>
+                            <a t-att-href="delivery.get_portal_url()" t-att-title="delivery.number">
+                                <t t-esc="delivery.number" t-if="delivery.number"/>
+                                <em t-else="">Draft delivery</em>
+                            </a>
+                        </td>
+                        <td><span t-field="delivery.date_delivery"/></td>
+                        <td class='d-none d-md-table-cell'><span t-field="delivery.date_due"/></td>
+                        <td class="tx_status">
+                            <t t-if="delivery.state == 'open'">
+                                <span class="badge badge-pill badge-info"><i class="fa fa-fw fa-clock-o" aria-label="Opened" title="Opened" role="img"></i><span class="d-none d-md-inline"> Waiting for Payment</span></span>
+                            </t>
+                            <t t-if="delivery.state == 'paid'">
+                                <span class="badge badge-pill badge-success"><i class="fa fa-fw fa-check" aria-label="Paid" title="Paid" role="img"></i><span class="d-none d-md-inline"> Paid</span></span>
+                            </t>
+                            <t t-if="delivery.state == 'cancel'">
+                                <span class="badge badge-pill badge-warning"><i class="fa fa-fw fa-remove" aria-label="Cancelled" title="Cancelled" role="img"></i><span class="d-none d-md-inline"> Cancelled</span></span>
+                            </t>
+                        </td>
+                        <td class="text-right"><span t-esc="-delivery.residual if delivery.type == 'out_refund' else delivery.residual" t-options='{"widget": "monetary", "display_currency": delivery.currency_id}'/></td>
+                    </tr>
+                </t>
+            </tbody>
+        </t>
+      </t>
+    </template>
+
         <!-- <template id="listing"> -->
         <!--   <ul> -->
         <!--     <li t-foreach="objects" t-as="object"> -->

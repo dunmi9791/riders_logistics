@@ -47,7 +47,7 @@ class DeliveryOrder(models.Model):
     product_id = fields.Many2one(comodel="product.product", string="Service Type")
     charges = fields.One2many('delivery.charges', 'order_id', 'Charges', required=False)
     invoice = fields.Many2one(comodel_name="account.invoice")
-    total_amount = fields.Float(string="Total Charge", compute="get_total")
+    total_amount = fields.Float(string="Total Charge", compute="get_total", store=True)
     service_id = fields.Many2one(comodel_name="product.template", string="Service type")
     invoice_status = fields.Selection([
         ('upselling', 'Upselling Opportunity'),
@@ -188,13 +188,9 @@ class DeliveryOrder(models.Model):
         self.change_state('Canceled')
 
     @api.multi
-    @api.depends('charges')
+    @api.depends('service_id')
     def get_total(self):
-        total = 0
-        for obj in self:
-            for each in obj.charges:
-                total += each.sub_total
-            obj.total_amount = total
+        self.total_amount = sum(charge.sub_total for charge in self.charges)
 
     @api.onchange('service_id')
     def _onchange_service(self):
