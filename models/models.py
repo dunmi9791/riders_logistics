@@ -12,7 +12,7 @@ class DeliveryOrder(models.Model):
     _name = 'delivery.order'
     _rec_name = 'order_no'
     _description = 'Deliveries'
-    _inherit = ['mail.thread', 'mail.activity.mixin']
+    _inherit = ['mail.thread', 'mail.activity.mixin', 'portal.mixin']
 
     name = fields.Char()
     order_no = fields.Char(string="Order Number", required=False,
