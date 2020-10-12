@@ -3,7 +3,7 @@
     'name': "riders_logistics",
 
     'summary': """
-        This app is developed to mange the day to day logistics for riders for health Nigeria""",
+        This app is developed to mange the day to day logistics for riders for health Nigeria The correct one""",
 
     'description': """
         Long description of module's purpose
