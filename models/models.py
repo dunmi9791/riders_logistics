@@ -300,7 +300,6 @@ class Collections(models.Model):
 
     @api.multi
     def confirm(self):
-        self.change_state('confirm')
         purchase_obj = self.env['purchase.order'].create({'partner_id': self.client_id.id,
                                                           'collection_id': self.id})
         self.purchase_obj = purchase_obj
@@ -313,6 +312,7 @@ class Collections(models.Model):
                                                 'product_uom': 1,
                                                 'date_planned': time.strftime('%Y-%m-%d'),
                                                 })
+        self.change_state('confirm')
 
     @api.multi
     def post(self):
