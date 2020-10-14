@@ -29,6 +29,7 @@
                   <button name="authorise" string="Pick Up" class="oe_highlight" states="Requested" groups="" type="object"/>
                   <button name="process" string="Process" class="oe_highlight" states="picked,Requested" groups="" type="object"/>
                   <button name="receive" string="Delivered" class="oe_highlight" states="Processed" groups="" type="object"/>
+                  <button name="%(portal.portal_share_action)d" string="Share" type="action" class="oe_highlight oe_read_only"/>
                   <button name="%(riders_logistics.collect_amount_wizard)d" string="Collect Amount" type="action"
                             class="oe_highlight"  context="{'default_delivery_order_id': active_id}" attrs="{'invisible':[('collected','=',True)]}"/>
 
